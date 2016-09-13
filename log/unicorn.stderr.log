@@ -879,3 +879,8 @@ I, [2016-09-13T13:07:28.679626 #2506]  INFO -- : worker=0 ready
         future versions will even invalidate your existing user cookies.
 
         Called from: /home/isucon/.local/ruby/lib/ruby/gems/2.2.0/gems/rack-1.6.4/lib/rack/builder.rb:86:in `new'.
+E, [2016-09-13T13:08:37.733346 #2503] ERROR -- : worker=0 PID:2506 timeout (61s > 60s), killing
+E, [2016-09-13T13:08:37.734338 #2503] ERROR -- : reaped #<Process::Status: pid 2506 SIGKILL (signal 9)> worker=0
+I, [2016-09-13T13:08:37.734477 #2503]  INFO -- : worker=0 spawning...
+I, [2016-09-13T13:08:37.735502 #2520]  INFO -- : worker=0 spawned pid=2520
+I, [2016-09-13T13:08:37.736581 #2520]  INFO -- : worker=0 ready
