@@ -110,6 +110,16 @@ SQL
       is_friend?(user_from_account(account_name)[:id])
     end
 
+    def get_friends_map(user_id)
+      q_str = "SELECT another from relations where one = #{user_id}"
+      friends = db.query(q_str).map {|row| [row[:another], row[:created_at]] }
+    end
+
+    def get_friends_ids(user_id)
+      q_str = "SELECT another from relations where one = #{user_id}"
+      friends = db.query(q_str).map {|row| row[:another] }
+    end
+
     def permitted?(another_id)
       another_id == current_user[:id] || is_friend?(another_id)
     end
@@ -181,13 +191,23 @@ SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
     entries_of_friends = []
-    db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-      next unless is_friend?(entry[:user_id])
+    # 解説1: is_friendが大量に呼ばれる
+    # db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
+    #  next unless is_friend?(entry[:user_id])
+    #  entry[:title] = entry[:body].split(/\n/).first
+    #  entries_of_friends << entry
+    #  break if entries_of_friends.size >= 10
+    # end
+
+    # 修正
+    friend_ids = get_friends_ids(current_user[:id])
+    eof_query = 'SELECT * FROM entries WHERE user_id IN ? ORDER BY id DESC LIMIT 10'
+    db.xquery(eof_query, friend_ids).each do |entry|
       entry[:title] = entry[:body].split(/\n/).first
       entries_of_friends << entry
-      break if entries_of_friends.size >= 10
     end
 
+    # 解説1: is_friendが大量に呼ばれる
     comments_of_friends = []
     db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
       next unless is_friend?(comment[:user_id])
