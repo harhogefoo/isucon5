@@ -220,7 +220,7 @@ SQL
 
     # 修正
     cof_query = 'SELECT * FROM comments c JOIN entries e ON c.entry_id = e.id
-                 WHERE c.user_id IN (?) AND ( e.private = 0 OR e.private = 1 AND (e.user_id = ? OR e.user_id IN (?))
+                 WHERE c.user_id IN (?) AND ( e.private = 0 OR e.private = 1 AND (e.user_id = ? OR e.user_id IN (?)))
                  ORDER BY c.id DESC LIMIT 10'
     db.xquery(cof_query, friend_ids, current_user[:id], friend_ids).each do |comment|
       comments_of_friends << comment
