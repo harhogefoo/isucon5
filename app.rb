@@ -201,7 +201,7 @@ SQL
 
     # 修正
     friend_ids = get_friends_ids(current_user[:id])
-    eof_query = 'SELECT * FROM entries WHERE user_id IN ? ORDER BY id DESC LIMIT 10'
+    eof_query = 'SELECT * FROM entries WHERE user_id IN (?) ORDER BY id DESC LIMIT 10'
     db.xquery(eof_query, friend_ids).each do |entry|
       entry[:title] = entry[:body].split(/\n/).first
       entries_of_friends << entry
