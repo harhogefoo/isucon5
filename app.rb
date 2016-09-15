@@ -111,7 +111,7 @@ SQL
     end
 
     def get_friends_map(user_id)
-      q_str = "SELECT another from relations where one = #{user_id}"
+      q_str = "SELECT another, created_at from relations where one = #{user_id}"
       friends = db.query(q_str).map {|row| [row[:another], row[:created_at]] }
     end
 
@@ -232,23 +232,20 @@ SQL
       break if comments_of_friends.size >= 10
     end
 
-    friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-    friends_map = {}
-    db.xquery(friends_query, current_user[:id], current_user[:id]).each do |rel|
-      key = (rel[:one] == current_user[:id] ? :another : :one)
-      friends_map[rel[key]] ||= rel[:created_at]
-    end
-    friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
+    # フレンド情報の取得
+    # 修正
+    # friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
+    # friends_map = {}
+    # db.xquery(friends_query, current_user[:id], current_user[:id]).each do |rel|
+    #   key = (rel[:one] == current_user[:id] ? :another : :one)
+    #   friends_map[rel[key]] ||= rel[:created_at]
+    # end
+    # friends = friends_map.map{|user_id, created_at| [user_id, created_at]}
+    friends = get_friends_map(current_user[:id])
 
-    query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
-FROM footprints
-WHERE user_id = ?
-GROUP BY user_id, owner_id, DATE(created_at)
-ORDER BY updated DESC
-LIMIT 10
-SQL
-    footprints = db.xquery(query, current_user[:id])
+
+    # footprints = db.xquery(query, current_user[:id])
+    footprints = get_footprints(10)
 
     locals = {
       profile: profile || {},
@@ -355,30 +352,55 @@ SQL
     redirect "/diary/entry/#{entry[:id]}"
   end
 
-  get '/footprints' do
-    authenticated!
-    query = <<SQL
-SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+
+  def get_footprints(c)
+#
+#     query = <<SQL
+# SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
+# FROM footprints
+# WHERE user_id = ?
+# GROUP BY user_id, owner_id, DATE(created_at)
+# ORDER BY updated DESC
+# LIMIT 10
+# SQL
+     query = <<SQL
+SELECT users.*, user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
 FROM footprints
+JOIN users ON owner_id = users.id
 WHERE user_id = ?
 GROUP BY user_id, owner_id, DATE(created_at)
 ORDER BY updated DESC
-LIMIT 50
 SQL
-    footprints = db.xquery(query, current_user[:id])
+    db.xquery(query << " LIMIT #{c}", current_user[:id])
+  end
+
+  get '/footprints' do
+    authenticated!
+#     query = <<SQL
+# SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) as updated
+# FROM footprints
+# WHERE user_id = ?
+# GROUP BY user_id, owner_id, DATE(created_at)
+# ORDER BY updated DESC
+# LIMIT 50
+# SQL
+    footprints = get_footprints(50)
+    # footprints = db.xquery(query, current_user[:id])
     erb :footprints, locals: { footprints: footprints }
   end
 
   get '/friends' do
     authenticated!
-    query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
-    friends = {}
-    db.xquery(query, current_user[:id], current_user[:id]).each do |rel|
-      key = (rel[:one] == current_user[:id] ? :another : :one)
-      friends[rel[key]] ||= rel[:created_at]
-    end
-    list = friends.map{|user_id, created_at| [user_id, created_at]}
-    erb :friends, locals: { friends: list }
+    # query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
+    # friends = {}
+    # db.xquery(query, current_user[:id], current_user[:id]).each do |rel|
+    #   key = (rel[:one] == current_user[:id] ? :another : :one)
+    #   friends[rel[key]] ||= rel[:created_at]
+    # end
+    # list = friends.map{|user_id, created_at| [user_id, created_at]}
+    q_str = "select users.nickname, users.account_name, created_at from relations join users on users.id = another where one = ?"
+    friends = db.xquery(q_str, current_user[:id])
+    erb :friends, locals: { friends: friends }
   end
 
   post '/friends/:account_name' do
