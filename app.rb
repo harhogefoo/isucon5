@@ -398,8 +398,9 @@ SQL
     #   friends[rel[key]] ||= rel[:created_at]
     # end
     # list = friends.map{|user_id, created_at| [user_id, created_at]}
-    q_str = "select users.nickname, users.account_name, created_at from relations join users on users.id = another where one = ?"
+    q_str = 'SELECT users.nick_name, users.account_name, created_at FROM relations JOIN users ON users.id = another WHERE one = ?'
     friends = db.xquery(q_str, current_user[:id])
+    # erb :friends, locals: { friends: list }
     erb :friends, locals: { friends: friends }
   end
 
